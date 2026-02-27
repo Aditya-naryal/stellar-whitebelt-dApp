@@ -1,10 +1,18 @@
-import {isConnected, requestAccess, signTransaction} from "@stellar/freighter-api";
-import {Horizon, TransactionBuilder, Networks, Operation, Asset} from "@stellar/stellar-sdk";
+import {
+  isConnected,
+  requestAccess,
+  signTransaction,
+} from "@stellar/freighter-api";
+import {
+  Horizon,
+  TransactionBuilder,
+  Networks,
+  Operation,
+  Asset,
+} from "@stellar/stellar-sdk";
 import { useEffect, useState } from "react";
 
-const server = new Horizon.Server(
-  "https://horizon-testnet.stellar.org"
-);
+const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
 function App() {
   const [address, setAddress] = useState<string | null>(null);
@@ -56,9 +64,7 @@ function App() {
         setBalance(nativeBalance?.balance ?? "0");
       } catch (err: any) {
         if (err?.response?.status === 404) {
-          setError(
-            "Account not activated. Fund via testnet faucet."
-          );
+          setError("Account not activated. Fund via testnet faucet.");
         } else {
           setError("Failed to fetch balance");
         }
@@ -72,6 +78,21 @@ function App() {
 
   const sendXLM = async () => {
     if (!address) return;
+
+    if (!recipient) {
+      setTxStatus("Please enter recipient address.");
+      return;
+    }
+
+    if (recipient.trim() === address?.trim()) {
+      setTxStatus("You cannot send XLM to your own address.");
+      return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      setTxStatus("Amount must be greater than 0.");
+      return;
+    }
 
     try {
       setTxStatus("Building transaction...");
@@ -118,84 +139,96 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center text-white">
-      <div className="bg-gray-900 shadow-xl rounded-2xl p-8 w-full max-w-lg">
-
-        <h1 className="text-3xl font-bold text-white-800 mb-6 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-gray-900 flex items-center justify-center text-white">
+      <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-2xl rounded-3xl p-10 w-full max-w-lg backdrop-blur-lg">
+        <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
           Stellar White Belt dApp
         </h1>
 
         {!address ? (
           <button
             onClick={connectWallet}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg transition"
+            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 transition duration-300 py-3 rounded-xl font-semibold shadow-lg shadow-blue-900/40"
           >
             Connect Wallet
           </button>
         ) : (
           <div className="space-y-6">
-
-            <div className="bg-gray-800 p-3 rounded-lg text-sm break-all">
-              <p className="text-gray-400">Connected Address</p>
-              <p>{address}</p>
+            {/* Connected Address */}
+            <div className="bg-gray-800/60 border border-gray-700 p-4 rounded-xl text-sm break-all">
+              <p className="text-gray-400 mb-1">Connected Address</p>
+              <p className="text-white font-medium">{address}</p>
             </div>
 
+            {/* Balance */}
             {loading && (
-              <p className="text-blue-400">Loading balance...</p>
+              <p className="text-blue-400 font-medium">Loading balance...</p>
             )}
 
-            {error && (
-              <p className="text-red-500">{error}</p>
-            )}
+            {error && <p className="text-red-400 font-medium">{error}</p>}
 
             {balance && !loading && !error && (
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <p className="text-gray-400">Balance</p>
-                <p className="text-xl font-semibold text-green-400">
+              <div className="bg-gray-800/60 border border-gray-700 p-4 rounded-xl">
+                <p className="text-gray-400 mb-1">Balance</p>
+                <p className="text-2xl font-semibold text-green-400">
                   {balance} XLM
                 </p>
               </div>
             )}
 
-            <div className="bg-gray-800 p-4 rounded-lg space-y-4">
-              <h2 className="text-lg font-semibold text-blue-400">
-                Send XLM
-              </h2>
+            {/* Send Section */}
+            <div className="bg-gray-800/60 border border-gray-700 p-5 rounded-xl space-y-4">
+              <h2 className="text-lg font-semibold text-blue-400">Send XLM</h2>
 
               <input
                 type="text"
                 placeholder="Recipient Address"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white outline-none"
+                className={`w-full p-3 rounded-lg bg-gray-900 border ${
+                  recipient.trim() === address?.trim()
+                    ? "border-red-500"
+                    : "border-gray-700"
+                } focus:border-blue-500 focus:outline-none transition`}
               />
 
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="Amount"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white outline-none"
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                    setAmount(value);
+                  }
+                }}
+                className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none transition"
               />
 
               <button
                 onClick={sendXLM}
-                className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg transition"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 transition duration-300 py-3 rounded-xl font-semibold shadow-lg shadow-blue-900/40"
               >
                 Send
               </button>
 
-              {txStatus && (
-                <p className="text-sm text-gray-300">
-                  {txStatus}
-                </p>
-              )}
+              {txStatus && <p className="text-sm text-gray-300">{txStatus}</p>}
 
               {txHash && (
                 <p className="text-sm break-all text-green-400">
                   Tx Hash: {txHash}
                 </p>
               )}
+              <a
+                href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 underline"
+              >
+                View on Explorer
+              </a>
             </div>
           </div>
         )}
