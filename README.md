@@ -5,6 +5,9 @@
 A modern dark-themed Stellar Testnet dApp built for the **Level 1 – White Belt Challenge**.
 This application demonstrates wallet integration, balance retrieval, and XLM transaction execution using the Stellar blockchain.
 
+🚀 Live Demo:
+https://stellarwhitebeltdapp.vercel.app/
+
 ---
 
 ## 🌌 Project Overview
